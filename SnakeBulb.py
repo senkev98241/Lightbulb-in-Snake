@@ -30,29 +30,30 @@ C = OUTSIDETEMP         # Guess of Constant of Integration
 
 PHO = (MASSBEAKER * HEATCAPBEAKER + MASSWATER * HEATCAPWATER) ** -1
 
-arbitraryConduct = 0.0
-arbitraryRadiate = 0.0
+arbitraryConduct = 0.0 # a
+arbitraryRadiate = 0.0 # b
 
 # Define the rate of change in temperature differential equation model
-def theoryModel(T, t): #y,t,k,v0,b,M0))
+def theoryModel(T, t, a, b): #y,t,k,v0,b,M0))
     # t, v = y
     EPOWER = VOLT ** 2 / RESIST
-    CONDUCT = arbitraryConduct * (T - OUTSIDETEMP ** 4)
-    RADIATE = arbitraryRadiate * (T ** 4 - OUTSIDETEMP ** 4)
+    CONDUCT = a * (T - OUTSIDETEMP ** 4)
+    RADIATE = b * (T ** 4 - OUTSIDETEMP ** 4)
     dTdt = [t, PHO * (EPOWER - (CONDUCT + RADIATE) ) ]
     return dTdt
 
 #Set initial conditions, [t=0,T(0)=OUTSIDETEMP]
-y0=[0,OUTSIDETEMP]
+y0=[0, OUTSIDETEMP]
 
 # Create timesteps from zero up to 61 minutes
 t_totalDuration = 60 * 61
-t = np.linspace(0, t_totalDuration, 3660) #Currently for every second, may change 3660 seconds to miliseconds for increased accuracy 
+t = np.linspace(0, t_totalDuration, t_totalDuration) #Currently for every second, may change 3660 seconds to miliseconds for increased accuracy 
 print("Delta Time=", t,"s")
 
 # Solve model given initial conditions and parameter values
-theoryGrated = odeint(theoryModel, y0, t, args=(k,v0,b,M0))
+theoryGrated = odeint(theoryModel, y0, t, args=(arbitraryConduct, arbitraryRadiate) )
 print(theoryGrated)
+
 #Velocity at t_burnout
 v_burnout = max(theoryGrated[:,1])
 

@@ -1,34 +1,20 @@
 #FILE: SnakeBulb.py
 #LANGUAGE: python 3.11
-#DESCRIPTION: Quick python script for determining velocity vs. time of a 
-# 1D rocket with constant gravity and simple v^2 wind resistance acting, 
-# and with constant propellant ejection rate.
+#DESCRIPTION: 
 
 #################################################
 # TO-DO
 #################################################
-# (1) ADD COAST PHASE: BURNOUT-TO-APEX
-# Add code to calculate apex height and time-to-apex after t_burnout
-
-# (2) ADD COAST PHASE: POST-APEX
-# Add code for free-fall after reaching apex, t > t_apex
-
-# (3)ADD GENERAL THRUST FUNCTIONS
-# Generalize the code to take general exhaust velocity
-# and exhaust mass rate functions v0(t), dm(t)/dt (or general
-# time-dependent thrust functions, either functional or discrete).
-# Such code will ultimately be needed to model with the actual
-# measured motor thrust characteristics
-
-
-###################################################
-# THRUST PHASE: VELOCITY VS. TIME
+# (1) Establish Constants
+# (2) Establish Differential Equation
+# (3) Establish
 ###################################################
 
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.integrate import odeint
 from scipy.integrate import trapz
+import csv
 
 # need to rework model1: dv/dt = -g+(v_0k-\beta v^2)/(M_0-kt)
 
@@ -41,42 +27,44 @@ MASSWATER = 0.09979     # Mass of water (kg)
 HEATCAPWATER = 4186     # Heat Capacity of Water
 OUTSIDETEMP = 294.95    # Temperature of Outside Air
 C = OUTSIDETEMP         # Guess of Constant of Integration
+
+PHO = (MASSBEAKER * HEATCAPBEAKER + MASSWATER * HEATCAPWATER) ** -1
+
 arbitraryConduct = 0.0
 arbitraryRadiate = 0.0
 
 # Define the rate of change in temperature differential equation model
 def theoryModel(T, t): #y,t,k,v0,b,M0))
     # t, v = y
-    PHO = (MASSBEAKER * HEATCAPBEAKER + MASSWATER * HEATCAPWATER) ** -1
     EPOWER = VOLT ** 2 / RESIST
     CONDUCT = arbitraryConduct * (T - OUTSIDETEMP ** 4)
     RADIATE = arbitraryRadiate * (T ** 4 - OUTSIDETEMP ** 4)
     dTdt = [t, PHO * (EPOWER - (CONDUCT + RADIATE) ) ]
     return dTdt
 
-#Set initial conditions, [t=0,v(0)=0]
+#Set initial conditions, [t=0,T(0)=OUTSIDETEMP]
 y0=[0,OUTSIDETEMP]
 
 # Create timesteps from zero up to 61 minutes
 t_totalDuration = 60 * 61
-t = np.linspace(0, t_totalDuration, 50) #replace 
-print("Burnout time=",t_burnout,"s")
+t = np.linspace(0, t_totalDuration, 3660) #Currently for every second, may change 3660 seconds to miliseconds for increased accuracy 
+print("Delta Time=", t,"s")
 
 # Solve model given initial conditions and parameter values
-sol1 = odeint(model1, y0, t, args=(k,v0,b,M0))
-#print(sol1)
+theoryGrated = odeint(theoryModel, y0, t, args=(k,v0,b,M0))
+print(theoryGrated)
 #Velocity at t_burnout
-v_burnout = max(sol1[:,1])
+v_burnout = max(theoryGrated[:,1])
 
 # Plot solution
-plt.plot(t, sol1[:, 1], 'b')
+plt.plot(t, theoryGrated[:, 1], 'b')
 plt.xlabel('t(s)')
-plt.ylabel('v(m/s)')
-#plt.title('Velocity vs. Time (burn phase)')
+plt.ylabel('T(K)')
+# plt.title('Velocity vs. Time (burn phase)') # Rename
 plt.grid()
-plt.text(1, 10, r"$\frac{dv}{dt}=-g+(v_0k-\beta v^2)/(M_0-kt)$")
-plt.text(1, 9,"$t_{burnout} = %s s$" %round(t_burnout,2))
-plt.text(1, 8,"$v_{burnout} = %s m/s$" %round(v_burnout,2))
+# plt.text(1, 10, r"$\frac{dv}{dt}=-g+(v_0k-\beta v^2)/(M_0-kt)$")
+# plt.text(1, 9,"$t_{burnout} = %s s$" %round(t_burnout,2))
+# plt.text(1, 8,"$v_{burnout} = %s m/s$" %round(v_burnout,2))
 plt.show()
 
 ################################################

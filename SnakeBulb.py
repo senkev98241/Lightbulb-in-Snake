@@ -43,6 +43,7 @@ def theoryModel(y, t, a, b):
     dydt = [temp, PHO * ( (VOLT ** 2 / RESIST) - ( (a * (temp - OUTSIDETEMP) ) + (b * (temp ** 4 - OUTSIDETEMP ** 4) ) ) ) ]
     return dydt
 
+# 
 a = 0.35 # arbitraryConduct
 b = 0.0000000001 # arbitraryRadiate
 

@@ -15,6 +15,7 @@ import matplotlib.pyplot as plt
 from scipy.integrate import odeint
 from scipy.integrate import trapz
 import csv
+# import math
 
 # need to rework model1: dv/dt = -g+(v_0k-\beta v^2)/(M_0-kt)
 
@@ -28,34 +29,35 @@ HEATCAPWATER = 4186     # Heat Capacity of Water
 OUTSIDETEMP = 294.95    # Temperature of Outside Air
 C = OUTSIDETEMP         # Guess of Constant of Integration
 
+# Mass and Heat Capacity
 PHO = (MASSBEAKER * HEATCAPBEAKER + MASSWATER * HEATCAPWATER) ** -1
 
-arbitraryConduct = 0.0 # a
-arbitraryRadiate = 0.0 # b
-
 # Define the rate of change in temperature differential equation model
-def theoryModel(T, t, a, b): #y,t,k,v0,b,M0))
-    # t, v = y
-    EPOWER = VOLT ** 2 / RESIST
-    CONDUCT = a * (T - OUTSIDETEMP ** 4)
-    RADIATE = b * (T ** 4 - OUTSIDETEMP ** 4)
-    dTdt = [t, PHO * (EPOWER - (CONDUCT + RADIATE) ) ]
-    return dTdt
+def theoryModel(y, t, a, b): 
+    # a' = b
+    # b' = 
+    t, temp = y
+    # EPOWER = VOLT ** 2 / RESIST
+    # CONDUCT = a * (temp - OUTSIDETEMP)
+    # RADIATE = b * (temp ** 4 - OUTSIDETEMP ** 4)
+    dydt = [temp, PHO * ( (VOLT ** 2 / RESIST) - ( (a * (temp - OUTSIDETEMP) ) + (b * (temp ** 4 - OUTSIDETEMP ** 4) ) ) ) ]
+    return dydt
+
+a = 0.35 # arbitraryConduct
+b = 0.0000000001 # arbitraryRadiate
 
 #Set initial conditions, [t=0,T(0)=OUTSIDETEMP]
 y0=[0, OUTSIDETEMP]
 
 # Create timesteps from zero up to 61 minutes
-t_totalDuration = 60 * 61
-t = np.linspace(0, t_totalDuration, t_totalDuration) #Currently for every second, may change 3660 seconds to miliseconds for increased accuracy 
+t_totalDuration = 3660
+t = np.linspace(0, t_totalDuration, 61 + 1) #Currently for every minutes, may change 3660 seconds to miliseconds for increased accuracy 
 print("Delta Time=", t,"s")
 
 # Solve model given initial conditions and parameter values
-theoryGrated = odeint(theoryModel, y0, t, args=(arbitraryConduct, arbitraryRadiate) )
+theoryGrated, infodist = odeint(theoryModel, y0, t, args=(a, b), full_output=True )
+print("Theory Grated --------------------")
 print(theoryGrated)
-
-#Velocity at t_burnout
-v_burnout = max(theoryGrated[:,1])
 
 # Plot solution
 plt.plot(t, theoryGrated[:, 1], 'b')
@@ -74,7 +76,7 @@ plt.show()
 
 # Numerically integrate v(t) from sol1 w.r.t. time t from t=0s to t=t_burnout
 # to get total displacement (change in height) using trapezoidal rule
-x_burnout = trapz(t,sol1[:,1])
+x_burnout = trapz(t,theoryGrated[:,1])
 print("x(t_burnout)=",x_burnout,"m")
 
 #################################################

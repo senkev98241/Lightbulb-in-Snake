@@ -69,6 +69,22 @@ def requestIntegral(a, b):
     print(theoryGrated)
     return theoryGrated
 
+# Create lmfit Parameters object and set initial values
+paramse = Parameters()
+paramse.add('a', value=0.1)
+paramse.add('b', value=0.0000000001)
+
+# modelTheory = lmfit.Model(requestIntegral, param_names = paramse)
+modelTheory = lmfit.Minimizer(requestIntegral, params=paramse)
+
+result = modelTheory.minimize(modelTheory, paramse)
+
+# result = modelTheory.fit(combined_data, params = paramse)
+
+# Get optimized values of 'a' and 'b'
+optimized_a = result.paramse['a'].value
+optimized_b = result.paramse['b'].value
+
 # Create a lmfit Model using the theoryModel function
 lm_model = lmfit.Model(requestIntegral)
 
@@ -76,7 +92,9 @@ lm_model = lmfit.Model(requestIntegral)
 lm_params = lm_model.make_params(a=0, b=0.000000000)
 
 # Perform the optimization
-print(lm_model.param_names, lm_model.independent_vars)
+print("hello")
+print(lm_model.param_names)
+print(lm_model.independent_vars)
 result = lm_model.fit(combined_data)
 
 # Print the result

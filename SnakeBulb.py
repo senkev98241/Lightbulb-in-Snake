@@ -14,8 +14,15 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.integrate import odeint
 from scipy.integrate import trapz
+import lmfit
+from lmfit import minimize, Parameters
 import csv
+import data
 # import math
+
+x_data = data.x_data
+y_data = data.y_data
+combined_data = data.combined_data
 
 # need to rework model1: dv/dt = -g+(v_0k-\beta v^2)/(M_0-kt)
 
@@ -40,12 +47,12 @@ def theoryModel(y, t, a, b):
     # EPOWER = VOLT ** 2 / RESIST
     # CONDUCT = a * (temp - OUTSIDETEMP)
     # RADIATE = b * (temp ** 4 - OUTSIDETEMP ** 4)
-    dydt = [temp, PHO * ( (VOLT ** 2 / RESIST) - ( (a * (temp - OUTSIDETEMP) ) + (b * (temp ** 4 - OUTSIDETEMP ** 4) ) ) ) ]
+    dydt = [temp, t * PHO * ( (VOLT ** 2 / RESIST) - ( (a * (temp - OUTSIDETEMP) ) + (b * (temp ** 4 - OUTSIDETEMP ** 4) ) ) ) ]
     return dydt
 
-# 
-a = 0.35 # arbitraryConduct
-b = 0.0000000001 # arbitraryRadiate
+# Coefficients of Optimization
+# a = 0 # arbitraryConduct
+# b = 0.000000000 # arbitraryRadiate
 
 #Set initial conditions, [t=0,T(0)=OUTSIDETEMP]
 y0=[0, OUTSIDETEMP]
@@ -56,53 +63,64 @@ t = np.linspace(0, t_totalDuration, 61 + 1) #Currently for every minutes, may ch
 print("Delta Time=", t,"s")
 
 # Solve model given initial conditions and parameter values
-theoryGrated, infodist = odeint(theoryModel, y0, t, args=(a, b), full_output=True )
-print("Theory Grated --------------------")
-print(theoryGrated)
+def requestIntegral(a, b): 
+    theoryGrated, infodist = odeint(theoryModel, y0, t, args=(a, b), full_output=True )
+    print("Theory Grated --------------------")
+    print(theoryGrated)
+    return theoryGrated
+
+# Create a lmfit Model using the theoryModel function
+lm_model = lmfit.Model(requestIntegral)
+
+# Set initial parameter values for optimization
+lm_params = lm_model.make_params(a=0, b=0.000000000)
+
+# Perform the optimization
+print(lm_model.param_names, lm_model.independent_vars)
+result = lm_model.fit(combined_data)
+
+# Print the result
+print(result.fit_report())
+
+# Get optimized values of 'a' and 'b'
+optimized_a = result.params['a'].value
+optimized_b = result.params['b'].value
+
+print("Optimized 'a':", optimized_a)
+print("Optimized 'b':", optimized_b)
+
+# # Define the objective function for lmfit
+# def objective(params, y0, t):
+#     a = params['a']
+#     b = params['b']
+#     theoryGrated, _ = odeint(theoryModel, y0, t, args=(a, b), full_output=True)
+#     return theoryGrated[:, 0]  # Return only the temperature values
+
+# # Create lmfit Parameters object and set initial values
+# params = Parameters()
+# params.add('a', value=0.0)
+# params.add('b', value=0.0)
+
+# # Perform the optimization
+# result = lmfit.minimize(objective, params, args=(y0, t))
+
+# # Extract optimized values
+# optimized_a = result.params['a'].value
+# optimized_b = result.params['b'].value
+
+# # Print optimized values
+# print(f"Optimized 'a': {optimized_a}")
+# print(f"Optimized 'b': {optimized_b}")
+
 
 # Plot solution
-plt.plot(t, theoryGrated[:, 1], 'b')
+plt.plot(x_data, y_data, '.', label="Lab Data", color="black")
+plt.plot(t, requestIntegral(optimized_a, optimized_b)[:, 1], 'b')
 plt.xlabel('t(s)')
 plt.ylabel('T(K)')
-# plt.title('Velocity vs. Time (burn phase)') # Rename
+plt.title('Temperature (K) vs. Time (Seconds)')
 plt.grid()
 # plt.text(1, 10, r"$\frac{dv}{dt}=-g+(v_0k-\beta v^2)/(M_0-kt)$")
 # plt.text(1, 9,"$t_{burnout} = %s s$" %round(t_burnout,2))
 # plt.text(1, 8,"$v_{burnout} = %s m/s$" %round(v_burnout,2))
-plt.show()
-
-################################################
-# THRUST PHASE: MAXIMUM HEIGHT REACHED BY t_burnout
-################################################
-
-# Numerically integrate v(t) from sol1 w.r.t. time t from t=0s to t=t_burnout
-# to get total displacement (change in height) using trapezoidal rule
-x_burnout = trapz(t,theoryGrated[:,1])
-print("x(t_burnout)=",x_burnout,"m")
-
-#################################################
-# THRUST PHASE: POSITION vs. TIME from t=0s to t_burnout
-#################################################
-
-# Define a funtion to numerically integrate v(t) from
-# t=0s to each value of t_i in the list t. This gives the
-# position x(t_i) integrated from t=0s up to and including t_i
-def f1(i):
-    t2 = [item for item in t if item <= t[i]]
-    sol2 = odeint(model1, y0, t2, args=(k,v0,b,M0))
-    a2 =trapz(t2,sol2[:,1])
-    return(a2)
-
-# Apply f1(i) to every element in t
-h = list(map(lambda i:f1(i),range(0,len(t))))
-
-#Plot position vs time x(t) up to t_burnout
-plt.plot(t,h,'b')
-plt.xlabel('t(s)')
-plt.ylabel('x(m)')
-#plt.title('Position vs. Time (burn phase)')
-plt.grid()
-plt.text(1, 18, "$x(t)=\int_0^t v(t)$")
-plt.text(1, 25,"$t_{burnout} = %s s$" %round(t_burnout,2))
-plt.text(1, 22,"$x_{burnout} = %s m$" %round(x_burnout,2))
 plt.show()

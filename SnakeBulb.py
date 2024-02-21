@@ -14,8 +14,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.integrate import odeint
 from scipy.integrate import trapz
-import lmfit
-from lmfit import minimize, Parameters
+from lmfit import conf_interval, report_ci, Parameters, Model
+from sympy import Symbol, integrate, lambdify, pprint
 import csv
 import data
 # import math

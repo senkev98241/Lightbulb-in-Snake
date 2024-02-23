@@ -18,12 +18,13 @@ from scipy.integrate import trapz
 from lmfit import conf_interval, report_ci, Parameters, Model
 from sympy import Symbol, integrate, lambdify, pprint
 import csv
-import data
+# import data
+from data import y_data, x_data
 # import math
 
-x_data = np.asarray(data.x_data)
-y_data = np.asarray(data.y_data)
-combined_data = data.combined_data
+x = np.asarray(x_data)
+y = np.asarray(y_data)
+# combined_data = combined_data
 
 # Set constants and other parameter values
 VOLT = 10.0             # Voltage (units here)
@@ -97,11 +98,11 @@ paramse.add('v', value=VOLT, vary=False)
 paramse.add('r', value=RESIST, vary=False)
 
 # modelTheory = lmfit.Model(requestIntegral, param_names = paramse)
-model = Model(diffModel(), independent_vars=['x', 'y'], param_names=paramse)
+model = Model(diffModel(), independent_vars=['x', 'y'])#, paramse=paramse)
 
 #Curve Fitting
 
-fit = model.fit(combined_data, x=df['x'], y=df['y'], params=paramse)
+fit = model.fit(df['y'], x=df['x'], y=df['y'], params=paramse)
 
 sigma_levels = [1, 2, 3]
 ci = conf_interval(fit, fit, sigmas=sigma_levels)

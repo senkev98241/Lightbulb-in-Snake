@@ -88,8 +88,8 @@ df = pd.DataFrame({'x': x_data, 'y': y_data})
 
 # Create lmfit Parameters object and set initial values
 paramse = Parameters()
-paramse.add('a', value=n, min=0, max=100)
-paramse.add('b', value=m, min=0, max=0.00001)
+paramse.add('a', value=0.38855, vary=False)
+paramse.add('b', value = 1 * (10 ** (-25) ), vary=False)
 
 paramse.add('c', value=294.65, vary=False)  #Integration constant, assumed to be intitial temp of water
 paramse.add('o', value=OUTSIDETEMP, vary=False)
@@ -98,7 +98,7 @@ paramse.add('v', value=VOLT, vary=False)
 paramse.add('r', value=RESIST, vary=False)
 
 # modelTheory = lmfit.Model(requestIntegral, param_names = paramse)
-model = Model(diffModel(), independent_vars=['x', 'y'])#, paramse=paramse)
+model = Model(diffModel())#, paramse=paramse)
 
 #Curve Fitting
 

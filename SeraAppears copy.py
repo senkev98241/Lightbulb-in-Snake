@@ -1,117 +1,48 @@
-from sympy import Symbol, integrate, lambdify, pprint
-from data import y_data, rawX_data, x_data
-import pandas as pd
-import numpy as np
+# from sympy import Symbol, integrate, lambdify, pprint
+# import pandas as pd
+# import numpy as np
 import matplotlib.pyplot as plt
-from lmfit import conf_interval, report_ci, Parameters, Model
+# from lmfit import conf_interval, report_ci, Parameters, Model
 
 ############################################################################################
 
-##Constants
+## Key Data
+import timeStamps
+time = timeStamps.timeStampsPoints
 
-VOLT = 10.0  # Voltage (v)
-RESIST = 10.8  # Resistance (ohms)
-MASSBEAKER = 0.11851  # Mass of beaker (kg)
-HEATCAPBEAKER = 830  # Heat Capacity of Beaker
-MASSWATER = 0.09979  # Mass of water (kg)
-HEATCAPWATER = 4186  # Heat Capacity of Water
-OUTSIDETEMP = 294.65  # Temperature of Outside Air (k)
+import rawTemps
+rawTempData = rawTemps.rawTempPoints
 
-#Constants used for starting point
+rawTempTime = [0, 60, 120, 180, 240, 300, 360, 420, 480, 540, 600, 660, 720, 780, 840, 900, 960, 1020, 1080, 1140, 1200, 1260, 1320, 1380, 1440, 1500, 1560, 1620, 1680, 1740, 1800, 1860, 1920, 1980, 2040, 2100, 2160, 2220, 2280, 2340, 2400, 2460, 2520, 2580, 2640, 2700, 2760, 2820, 2880, 2940, 3000, 3060, 3120, 3180, 3240, 3300, 3360, 3420, 3480, 3540, 3600, 3660]
 
-S = 5.670374419 * 10**(-8)  #Stefan-Boltzmann Constant
-W = 0.002799  #Width of Beaker Wall
-E = 0.9  #Emissivity of Beaker?
-K = 1.2  #Conductivity of Beaker
-A = 0.0145582188966  #Surface of Beaker
+import pseudoTrapTemps
+pseudoTrapTempData = pseudoTrapTemps.pseudoTempPoints
 
-m = (K * A) / W
-n = S * A * E
+import midEulerTemps
+midEulerTempData = midEulerTemps.midEulerTempPoints
 
-# Mass and Heat Capacity
-PHO = (MASSBEAKER * HEATCAPBEAKER + MASSWATER * HEATCAPWATER)
+import OrderTwoRKTemps
+OrderTwoRKTempData = OrderTwoRKTemps.O2RGK
 
-############################################################################################
-
-
-##integral solved for y, but y is not isolated
-def funY():
-  x, y, a, b, o, p, v, r, c = (Symbol("x"), Symbol("y"), Symbol("a"),
-                               Symbol("b"), Symbol("o"), Symbol("p"),
-                               Symbol("v"), Symbol("r"), Symbol("c"))
-  ##fun1 is the equation= that will be integrated
-  fun1 = (p**(-1)) * (v**2 / r - (a * ((y**4) - (o**4))) - b * (y - o))
-  ##fun2 is the losses integrated in respect to temperature or y
-  fun2 = integrate(fun1, x) + c
-  ##Prints out ascii equation in console
-  pprint(fun2)
-  return lambdify([x, y, a, b, o, p, v, r, c],
-                  expr=fun2,
-                  modules="scipy",
-                  cse=True,
-                  docstring_limit=None)
-
-
-############################################################################################
-
-##Assigning Lab Data to Independent Variables
-
-df = pd.DataFrame({
-    'x': x_data,
-    'y': y_data,
-})
-
-y = np.asarray(y_data)
-x = np.asarray(x_data)
-
-##Paramater Declaration
-
-paramse = Parameters()
-paramse.add('a', value=n, min=0, max=0.00001)
-paramse.add('b', value=m, min=0, max=500)
-
-paramse.add(
-    'c', value=OUTSIDETEMP,
-    vary=False)  #Integration constant, assumed to be intitial temp of water
-paramse.add('o', value=OUTSIDETEMP, vary=False)
-paramse.add('p', value=PHO, vary=False)
-paramse.add('v', value=VOLT, vary=False)
-paramse.add('r', value=RESIST, vary=False)
-
-##Creating function used for curve fit
-
-model = Model(funY(), independent_vars=["x", "y"], paramse=paramse)
-
-##Curve Fitting
-
-fit = model.fit(df['y'],
-                x=df['x'],
-                y=df['y'],
-                method="differential_evolution",
-                params=paramse)
-
-##Calculating 3 standard deviations of confidence intervals
-
-# sigma_levels = [1, 2, 3]
-# ci = conf_interval(fit, fit, sigmas=sigma_levels)
-
-##Printing Coefficient Data & CI
-
-print(fit.fit_report())
-# report_ci(ci)
-
-#print(fit.best_fit)
+import OrderFourRKTemps
+OrderFourRKTempData = OrderFourRKTemps.O4RGK
 ############################################################################################
 
 ##Plotting Graphs
 
-plt.plot(x_data, y_data, '.', label="Lab Data", color="teal")
-plt.plot(x, fit.best_fit, '-', label='Best Fit', color="orange")
+# plt.plot(rawTempTime, rawTemps, '.', label="Raw Temps", color="teal")
+plt.plot(time, pseudoTrapTemps, '.', label="Pseudo Trapezoidal", color="red")
+plt.plot(time, midEulerTemps, '.', label="Midpoint Euler", color="purple")
+plt.plot(time, OrderTwoRKTemps, '.', label="2nd Order Runge-Kutta", color="yellow")
+plt.plot(time, OrderTwoRKTemps, '.', label="4th Order Runge-Kutta", color="black")
+
+
 plt.ylabel("Temperature (Kelvin)")
-plt.xlabel("Time (Minutes)")
+plt.xlabel("Time (Seconds)")
 plt.title(
     "Curve Fit of Thermal Losses Compared to Lab Data \n Temperature (k) vs. Time (Min)"
 )
-plt.xlim(-10, 3670)
+plt.xlim(-60, 3720)
+plt.ylim(293.15,323.15)
 plt.legend()
 plt.show()

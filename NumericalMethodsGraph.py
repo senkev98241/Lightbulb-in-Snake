@@ -57,10 +57,10 @@ ax.grid(which='minor', linewidth=0.5)
 # ax.grid(which='major', alpha=0.5)
 
 plt.plot(time, pseudoTrapTempData, '.', label="Pseudo Trapezoidal", color="red", markersize=8)
-plt.plot(time, midEulerTempData, '.', label="Midpoint Euler", color="purple")
+plt.plot(time, midEulerTempData, '.', label="Midpoint Euler", color="purple", markersize = 12)
 plt.plot(time, OrderTwoRKTempData, '.', label="2nd Order Runge-Kutta", color="yellow", markersize=4)
 plt.plot(time, OrderTwoRKTempData, '.', label="4th Order Runge-Kutta", color="black", markersize=1)
-plt.plot(rawTempTimeData, rawTempData, '.', label="Raw Temps", color="teal", markersize=10)
+plt.plot(rawTempTimeData, rawTempData, '.', label="Raw Temps", color="teal", markersize=9)
 
 plt.ylabel("Temperature (Kelvin)")
 plt.xlabel("Time (Seconds)")

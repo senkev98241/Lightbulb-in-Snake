@@ -45,15 +45,15 @@ with open(filename, 'w') as f:
     # Write the initial temperature
     f.write(str(T[0]) + '\n')
     for i in range(1, len(t)):
-        # dTdt = (1/(C_water*m_water + C_beaker*m_beaker)) * ((V**2)/R 
-        #                                                   - A_beaker*E_beaker*o_stefan*T[i-1]**4 
-        #                                                   - A_water*E_water*o_stefan*T[i-1]**4 
-        #                                                   - k_beaker*A_sidesofwater*(T[i-1]-T_air)/d_thickness)
         dTdt = (1/(C_water*m_water + C_beaker*m_beaker)) * ((V**2)/R 
-                                                          - 0.0000000000000000000000001*T[i-1]**4 
-                                                          - 0.0000000000000000000000001*T[i-1]**4 
-                                                          - .33855*(T[i-1]-T_air))
+                                                          - A_beaker*E_beaker*o_stefan*T[i-1]**4 
+                                                          - A_water*E_water*o_stefan*T[i-1]**4 
+                                                          - k_beaker*A_sidesofwater*(T[i-1]-T_air)/d_thickness)
+        # dTdt = (1/(C_water*m_water + C_beaker*m_beaker)) * ((V**2)/R 
+        #                                                   - 0.0000000000000000000000001*T[i-1]**4 
+        #                                                   - 0.0000000000000000000000001*T[i-1]**4 
+        #                                                   - .33855*(T[i-1]-T_air))
         T[i] = T[i-1] + dTdt*dt
         # Write every 60th step, 1 minute
-        # if i % 60 == 0:
-        f.write(str(T[i]) + '\n')
+        if i % 60 == 0:
+            f.write(str(T[i]) + '\n')
